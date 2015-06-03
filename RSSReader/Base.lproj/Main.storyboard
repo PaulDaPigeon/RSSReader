@@ -69,12 +69,10 @@
                                 </connections>
                             </segmentedControl>
                         </barButtonItem>
-                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="GMr-EF-yiq">
-                            <connections>
-                                <action selector="addFeed:" destination="pGg-6v-bdr" id="e5W-vW-om8"/>
-                            </connections>
-                        </barButtonItem>
                     </navigationItem>
+                    <connections>
+                        <outlet property="segmentedControl" destination="tIt-na-T4C" id="1Z5-2x-Jud"/>
+                    </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="6Cn-md-YlS" sceneMemberID="firstResponder"/>
             </objects>
