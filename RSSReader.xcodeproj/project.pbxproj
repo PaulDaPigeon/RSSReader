@@ -18,6 +18,7 @@
 		622722991B1DEA620050CFAD /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 622722981B1DEA620050CFAD /* Images.xcassets */; };
 		6227229C1B1DEA620050CFAD /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6227229A1B1DEA620050CFAD /* LaunchScreen.xib */; };
 		622722A81B1DEA620050CFAD /* RSSReaderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 622722A71B1DEA620050CFAD /* RSSReaderTests.m */; };
+		6273048C1B1F20AF008F3EB2 /* Feed.m in Sources */ = {isa = PBXBuildFile; fileRef = 6273048B1B1F20AF008F3EB2 /* Feed.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +49,8 @@
 		622722A11B1DEA620050CFAD /* RSSReaderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RSSReaderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		622722A61B1DEA620050CFAD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		622722A71B1DEA620050CFAD /* RSSReaderTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RSSReaderTests.m; sourceTree = "<group>"; };
+		6273048A1B1F20AF008F3EB2 /* Feed.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Feed.h; sourceTree = "<group>"; };
+		6273048B1B1F20AF008F3EB2 /* Feed.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Feed.m; sourceTree = "<group>"; };
 		874B4E00D45AD0862B44E9EB /* Pods-RSSReader.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RSSReader.release.xcconfig"; path = "Pods/Target Support Files/Pods-RSSReader/Pods-RSSReader.release.xcconfig"; sourceTree = "<group>"; };
 		A224C0964775C33806645F9A /* libPods-RSSReaderTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-RSSReaderTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C97BE729CD8F2312B81C30A5 /* libPods-RSSReader.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-RSSReader.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -109,11 +112,13 @@
 			children = (
 				622722891B1DEA620050CFAD /* AppDelegate.h */,
 				6227228A1B1DEA620050CFAD /* AppDelegate.m */,
+				622722951B1DEA620050CFAD /* Main.storyboard */,
 				6227228F1B1DEA620050CFAD /* MasterViewController.h */,
 				622722901B1DEA620050CFAD /* MasterViewController.m */,
 				622722921B1DEA620050CFAD /* DetailViewController.h */,
 				622722931B1DEA620050CFAD /* DetailViewController.m */,
-				622722951B1DEA620050CFAD /* Main.storyboard */,
+				6273048A1B1F20AF008F3EB2 /* Feed.h */,
+				6273048B1B1F20AF008F3EB2 /* Feed.m */,
 				622722981B1DEA620050CFAD /* Images.xcassets */,
 				6227229A1B1DEA620050CFAD /* LaunchScreen.xib */,
 				6227228C1B1DEA620050CFAD /* RSSReader.xcdatamodeld */,
@@ -329,6 +334,7 @@
 				622722941B1DEA620050CFAD /* DetailViewController.m in Sources */,
 				622722911B1DEA620050CFAD /* MasterViewController.m in Sources */,
 				6227228E1B1DEA620050CFAD /* RSSReader.xcdatamodeld in Sources */,
+				6273048C1B1F20AF008F3EB2 /* Feed.m in Sources */,
 				6227228B1B1DEA620050CFAD /* AppDelegate.m in Sources */,
 				622722881B1DEA620050CFAD /* main.m in Sources */,
 			);
