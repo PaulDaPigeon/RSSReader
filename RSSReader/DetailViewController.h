@@ -10,6 +10,9 @@
 
 @interface DetailViewController : UIViewController
 
+@property (strong, nonatomic) IBOutlet UIWebView *webView;
+@property (strong, nonatomic) NSArray *articles;
+@property (strong, nonatomic) NSIndexPath *indexPath;
 
 @end
 

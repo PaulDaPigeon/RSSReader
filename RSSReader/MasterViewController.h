@@ -10,7 +10,5 @@
 
 @interface MasterViewController : UITableViewController
 
-- (IBAction)addFeed:(id)sender;
-
 @end
 
