@@ -40,8 +40,6 @@ typedef enum ViewTypes
     Boolean inItemElement;
     NSInteger indexOfCellBeingEdited;
     NSArray *oldArticles;
-    
-    NSFetchedResultsController *fetchedResultsController;
 }
 
 @property (strong, nonatomic) IBOutlet UISegmentedControl *segmentedControl;
@@ -114,29 +112,6 @@ NSString * const okButtonTitle = @"Ok";
         [self countUnreadArticles:feed];
     }
     [self saveContext];
-    
-    
-    
-    UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
-    [refreshControl addTarget:self action:@selector(refresh:) forControlEvents:UIControlEventValueChanged];
-    [self setRefreshControl:refreshControl];
-    
-    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] initWithEntityName:@"Feed"];
-    
-    NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES];
-    
-    [fetchRequest setSortDescriptors:@[sortDescriptor]];
-    
-    [fetchedResultsController setDelegate:self];
-    
-    NSError *error;
-    
-    [fetchedResultsController performFetch:&error];
-    
-    if (!error)
-    {
-        NSLog(@"%@", error);
-    }
 }
 
 -(void)viewWillAppear:(BOOL)animated
