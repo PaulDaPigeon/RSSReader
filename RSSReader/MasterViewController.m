@@ -112,6 +112,10 @@ NSString * const okButtonTitle = @"Ok";
         [self countUnreadArticles:feed];
     }
     [self saveContext];
+    
+    UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
+    [refreshControl addTarget:self action:@selector(refresh:) forControlEvents:UIControlEventValueChanged];
+    [self setRefreshControl:refreshControl];
 }
 
 -(void)viewWillAppear:(BOOL)animated
