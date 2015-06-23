@@ -22,6 +22,7 @@
 		625199AF1B25D79D00D748CD /* FeedCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 625199AE1B25D79D00D748CD /* FeedCell.m */; };
 		62789DAC1B2779A00008073F /* Feed.m in Sources */ = {isa = PBXBuildFile; fileRef = 62789DAB1B2779A00008073F /* Feed.m */; };
 		62789DAF1B277DB00008073F /* Article.m in Sources */ = {isa = PBXBuildFile; fileRef = 62789DAE1B277DB00008073F /* Article.m */; };
+		629A185E1B39945A001547D7 /* TitleCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 629A185D1B39945A001547D7 /* TitleCell.m */; };
 		62F484621B25E545003FF322 /* ArticleCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 62F484611B25E545003FF322 /* ArticleCell.m */; };
 /* End PBXBuildFile section */
 
@@ -60,6 +61,8 @@
 		62789DAB1B2779A00008073F /* Feed.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Feed.m; sourceTree = "<group>"; };
 		62789DAD1B277DB00008073F /* Article.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Article.h; sourceTree = "<group>"; };
 		62789DAE1B277DB00008073F /* Article.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Article.m; sourceTree = "<group>"; };
+		629A185C1B39945A001547D7 /* TitleCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TitleCell.h; sourceTree = "<group>"; };
+		629A185D1B39945A001547D7 /* TitleCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TitleCell.m; sourceTree = "<group>"; };
 		62F484601B25E545003FF322 /* ArticleCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArticleCell.h; sourceTree = "<group>"; };
 		62F484611B25E545003FF322 /* ArticleCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ArticleCell.m; sourceTree = "<group>"; };
 		874B4E00D45AD0862B44E9EB /* Pods-RSSReader.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RSSReader.release.xcconfig"; path = "Pods/Target Support Files/Pods-RSSReader/Pods-RSSReader.release.xcconfig"; sourceTree = "<group>"; };
@@ -124,6 +127,8 @@
 				622722891B1DEA620050CFAD /* AppDelegate.h */,
 				6227228A1B1DEA620050CFAD /* AppDelegate.m */,
 				622722951B1DEA620050CFAD /* Main.storyboard */,
+				629A185C1B39945A001547D7 /* TitleCell.h */,
+				629A185D1B39945A001547D7 /* TitleCell.m */,
 				62F484601B25E545003FF322 /* ArticleCell.h */,
 				62F484611B25E545003FF322 /* ArticleCell.m */,
 				625199AD1B25D79D00D748CD /* FeedCell.h */,
@@ -355,6 +360,7 @@
 				62789DAF1B277DB00008073F /* Article.m in Sources */,
 				62789DAC1B2779A00008073F /* Feed.m in Sources */,
 				622722911B1DEA620050CFAD /* MasterViewController.m in Sources */,
+				629A185E1B39945A001547D7 /* TitleCell.m in Sources */,
 				62F484621B25E545003FF322 /* ArticleCell.m in Sources */,
 				6227228E1B1DEA620050CFAD /* RSSReader.xcdatamodeld in Sources */,
 				6227228B1B1DEA620050CFAD /* AppDelegate.m in Sources */,

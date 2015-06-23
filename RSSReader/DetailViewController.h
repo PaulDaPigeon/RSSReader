@@ -7,11 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "MagicalRecord.h"
 
 @interface DetailViewController : UIViewController
 
 @property (strong, nonatomic) IBOutlet UIWebView *webView;
-@property (strong, nonatomic) NSArray *articles;
+@property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
 @property (strong, nonatomic) NSIndexPath *indexPath;
 
 @end

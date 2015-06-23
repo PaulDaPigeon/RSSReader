@@ -13,6 +13,7 @@
 #import "Article.h"
 #import "FeedCell.h"
 #import "ArticleCell.h"
+#import "TitleCell.h"
 
 typedef enum ViewTypes
 {
@@ -40,6 +41,9 @@ typedef enum ViewTypes
     Boolean inItemElement;
     NSInteger indexOfCellBeingEdited;
     NSArray *oldArticles;
+    
+    NSFetchedResultsController *fetchedResultsController;
+    NSString *selectedFeedURL;
 }
 
 @property (strong, nonatomic) IBOutlet UISegmentedControl *segmentedControl;
@@ -116,14 +120,50 @@ NSString * const okButtonTitle = @"Ok";
     UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
     [refreshControl addTarget:self action:@selector(refresh:) forControlEvents:UIControlEventValueChanged];
     [self setRefreshControl:refreshControl];
+    
+    [self setUpFetchedResultsController];
 }
 
--(void)viewWillAppear:(BOOL)animated
+-(void)setUpFetchedResultsController
 {
-    [super viewWillAppear:animated];
+    NSFetchRequest *fetchRequest;
+    NSSortDescriptor *sortDescriptor;
     
-    [self.tableView reloadData];
+    if (viewType == allFeeds)
+    {
+        fetchRequest = [[NSFetchRequest alloc] initWithEntityName:@"Feed"];
+        
+        sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES];
+    }
+    else
+    {
+        fetchRequest = [[NSFetchRequest alloc] initWithEntityName:@"Article"];
+        sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:publicationDate ascending:NO];
+        
+        if (viewType == articlesOfAFeed)
+        {
+            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"feed.feedURL == %@",selectedFeedURL];
+            
+            [fetchRequest setPredicate:predicate];
+        }
+    }
+    
+    [fetchRequest setSortDescriptors:@[sortDescriptor]];
+    
+    fetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest managedObjectContext:[NSManagedObjectContext MR_defaultContext] sectionNameKeyPath:nil cacheName:nil];
+    
+    [fetchedResultsController setDelegate:self];
+    
+    NSError *error;
+    
+    [fetchedResultsController performFetch:&error];
+    
+    if (error)
+    {
+        NSLog(@"%@", error);
+    }
 }
+
 
 -(void)countUnreadArticles:(Feed *)feed
 {
@@ -166,6 +206,8 @@ NSString * const okButtonTitle = @"Ok";
             [refreshControl addTarget:self action:@selector(refresh:) forControlEvents:UIControlEventValueChanged];
             [self setRefreshControl:refreshControl];
             
+            [self setUpFetchedResultsController];
+            
             for (Feed *feed in feeds)
             {
                 [self countUnreadArticles:feed];
@@ -177,8 +219,6 @@ NSString * const okButtonTitle = @"Ok";
         case 1: {
             [self showAllArticles];
         }
-            break;
-        default:
             break;
     }
 }
@@ -225,7 +265,7 @@ NSString * const okButtonTitle = @"Ok";
 {
     viewType = allArticles;
     [self.navigationItem setRightBarButtonItem:nil];
-    [self getAllArticles];
+    [self setUpFetchedResultsController];
     
     self.navigationController.navigationBar.topItem.title = allArticlesString;
     
@@ -246,42 +286,6 @@ NSString * const okButtonTitle = @"Ok";
     {
         feed.name = feedName;
     }
-}
-
--(void)getArticlesOfFeedAtIndex:(NSIndexPath *) indexPath
-{
-    Feed *feed = [feeds objectAtIndex:indexPath.row];
-    
-    articles = [[feed.articles allObjects] mutableCopy];
-    NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:publicationDate ascending:NO comparator:^(id obj1, id obj2) {
-        NSDate *date1 = obj1;
-        NSDate *date2 = obj2;
-        
-        return [date1 compare:date2];
-    }];
-                                        
-    articles = [[articles sortedArrayUsingDescriptors:[NSArray arrayWithObject:sortDescriptor]] mutableCopy];
-    for (Article *article in articles)
-    {
-        NSLog(@"%@ %@", article.title, article.publicationDate);
-    }
-}
-
--(void)getAllArticles
-{
-    articles = [NSMutableArray array];
-    for (Feed *feed in feeds)
-    {
-        [articles addObjectsFromArray:[feed.articles allObjects]];
-    }
-    NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:publicationDate ascending:NO comparator:^(id obj1, id obj2) {
-        NSDate *date1 = obj1;
-        NSDate *date2 = obj2;
-        
-        return [date1 compare:date2];
-    }];
-    
-    articles = [[articles sortedArrayUsingDescriptors:[NSArray arrayWithObject:sortDescriptor]] mutableCopy];
 }
 
 -(NSString *)removeTrailingWhitespaceFromString:(NSString *)string
@@ -355,10 +359,12 @@ NSString * const okButtonTitle = @"Ok";
         currentTitle = [[self removeTrailingWhitespaceFromString:currentTitle] mutableCopy];
         currentArticleDescription = [[self removeTrailingWhitespaceFromString:currentArticleDescription] mutableCopy];
         currentLink = [[self removeTrailingWhitespaceFromString:currentLink] mutableCopy];
+        currentPublicationDate = [[self removeTrailingWhitespaceFromString:currentPublicationDate] mutableCopy];
         
         currentTitle = [[currentTitle stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]] mutableCopy];
         currentArticleDescription = [[currentArticleDescription stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]] mutableCopy];
         currentLink = [[currentLink stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]] mutableCopy];
+        currentPublicationDate = [[currentPublicationDate stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]] mutableCopy];
         
         currentArticle.title = currentTitle;
         currentArticle.articleDescription = currentArticleDescription;
@@ -509,16 +515,115 @@ NSString * const okButtonTitle = @"Ok";
 
 #pragma mark - TableView
 
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return [[fetchedResultsController sections] count];
+}
+
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    switch (viewType) {
-        case allFeeds:
-            return [feeds count];
-            break;
-            
-        default:
-            return [articles count];
-            break;
+    NSArray *sections = [fetchedResultsController sections];
+    id<NSFetchedResultsSectionInfo> sectionInfo = [sections objectAtIndex:section];
+    
+    return [sectionInfo numberOfObjects];
+}
+
+-(void)configureFeedCell:(FeedCell *)cell atIndexPath:(NSIndexPath *)indexPath
+{
+    Feed *feed = (Feed *) [fetchedResultsController objectAtIndexPath:indexPath];
+    [cell.nameLabel setText:feed.name];
+    [cell.unreadArticlesCountLabel setText:[NSString stringWithFormat:@"%li", (long)[feed.unreadArticleCount integerValue]]];
+    [cell.editButton setTag:indexPath.row];
+    
+    if ([feed.unreadArticleCount integerValue] != 0)
+    {
+        cell.unreadArticlesCountLabel.text = [NSString stringWithFormat:@"%li", [feed.unreadArticleCount integerValue]];
+        cell.unreadArticlesCountLabel.hidden = NO;
+    }
+    else
+    {
+        cell.unreadArticlesCountLabel.hidden = YES;
+    }
+    
+    if (feed.image.length != 0)
+    {
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^
+                       {
+                           NSURL *url = [NSURL URLWithString:[feed.image stringByTrimmingCharactersInSet:
+                                                              [NSCharacterSet whitespaceAndNewlineCharacterSet]]];
+                           NSURLRequest *request = [NSURLRequest requestWithURL:url];
+                           
+                           NSURLResponse *response;
+                           NSError *error;
+                           NSData *data = [NSURLConnection sendSynchronousRequest:request
+                                                                returningResponse:&response
+                                                                            error:&error];
+                           if (!error)
+                           {
+                               dispatch_async(dispatch_get_main_queue(), ^
+                                              {
+                                                  cell.image.image = [UIImage imageWithData:data];
+                                              });
+                           }
+                           else
+                           {
+                               NSLog(@"Could not download icon with error: %@", error);
+                           }
+                       });
+    }
+    else
+    {
+        UIGraphicsBeginImageContextWithOptions(CGSizeMake(36, 36), NO, 0.0);
+        UIImage *blank = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        cell.image.image = blank;
+    }
+}
+
+-(void)configureArticleCell:(ArticleCell *)cell atIndexPath:(NSIndexPath *)indexPath
+{
+    Article *article = (Article *) [fetchedResultsController objectAtIndexPath:indexPath];
+    [cell.titleLabel setText:article.title];
+    [cell.descriptionLabel setText:article.articleDescription];
+    
+    if ([article.isUnread isEqualToNumber: [NSNumber numberWithInt:1]])
+    {
+        cell.titleLabel.textColor = [UIColor redColor];
+    }
+    else
+    {
+        cell.titleLabel.textColor = [UIColor blackColor];
+    }
+    
+    UILabel *titleLabel = cell.titleLabel;
+    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+    paragraphStyle.lineBreakMode = titleLabel.lineBreakMode;
+    CGFloat height = [self calculateHeightOfText:article.title font:[UIFont boldSystemFontOfSize:19.0f] maximumWidthOfText:self.tableView.bounds.size.width - 16.0f paragraphStyle:paragraphStyle];
+    height = ceil(height);
+    [titleLabel addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:[NSString stringWithFormat:@"V:[titleLabel(==%f@1000)]", height] options:0 metrics:nil views:NSDictionaryOfVariableBindings(titleLabel)]];
+    if (article.description
+        == 0)
+    {
+        cell.descriptionLabel.hidden = YES;
+    }
+    else
+    {
+        cell.descriptionLabel.hidden = NO;
+    }
+}
+
+-(void)configureTitleCell:(TitleCell *)cell atIndexPath:(NSIndexPath *)indexPath
+{
+    Article *article = (Article *) [fetchedResultsController objectAtIndexPath:indexPath];
+    [cell.titleLabel setText: article.title];
+    
+    if ([article.isUnread isEqualToNumber: [NSNumber numberWithInt:1]])
+    {
+        cell.titleLabel.textColor = [UIColor redColor];
+    }
+    else
+    {
+        cell.titleLabel.textColor = [UIColor blackColor];
     }
 }
 
@@ -527,99 +632,22 @@ NSString * const okButtonTitle = @"Ok";
     switch (viewType) {
         case allFeeds:
         {
-            FeedCell *cell = [tableView dequeueReusableCellWithIdentifier:feedCell];
-            Feed *feed = [feeds objectAtIndex:indexPath.row];
-            cell.nameLabel.text = feed.name;
-            cell.editButton.tag = indexPath.row;
-            if ([feed.unreadArticleCount integerValue] != 0)
-            {
-                cell.unreadArticlesCountLabel.text = [NSString stringWithFormat:@"%li", [feed.unreadArticleCount integerValue]];
-                cell.unreadArticlesCountLabel.hidden = NO;
-            }
-            else
-            {
-                cell.unreadArticlesCountLabel.hidden = YES;
-            }
-            
-            if (feed.image.length != 0)
-            {
-                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^
-                               {
-                                   NSURL *url = [NSURL URLWithString:[feed.image stringByTrimmingCharactersInSet:
-                                                                      [NSCharacterSet whitespaceAndNewlineCharacterSet]]];
-                                   NSURLRequest *request = [NSURLRequest requestWithURL:url];
-                                   
-                                   NSURLResponse *response;
-                                   NSError *error;
-                                   NSData *data = [NSURLConnection sendSynchronousRequest:request
-                                                                        returningResponse:&response
-                                                                                    error:&error];
-                                   if (!error)
-                                   {
-                                       dispatch_async(dispatch_get_main_queue(), ^
-                                                      {
-                                                          cell.image.image = [UIImage imageWithData:data];
-                                                      });
-                                   }
-                                   else
-                                   {
-                                       NSLog(@"Could not download icon with error: %@", error);
-                                   }
-                               });
-            }
-            else
-            {
-                UIGraphicsBeginImageContextWithOptions(CGSizeMake(36, 36), NO, 0.0);
-                UIImage *blank = UIGraphicsGetImageFromCurrentImageContext();
-                UIGraphicsEndImageContext();
-                cell.image.image = blank;
-            }
+            FeedCell *cell = [self.tableView dequeueReusableCellWithIdentifier:feedCell forIndexPath:indexPath];
+            [self configureFeedCell:cell atIndexPath:indexPath];
             
             return cell;
         }
-            
         case allArticles:
         {
-            ArticleCell *cell = [tableView dequeueReusableCellWithIdentifier:articleCell];
-            NSString *titleText = [(Article *) [articles objectAtIndex:indexPath.row] title];
-            NSString *descriptionText = [(Article *) [articles objectAtIndex:indexPath.row] articleDescription];
-            
-            cell.titleLabel.text = titleText;
-            cell.descriptionLabel.text = descriptionText;
-            
-            if ([[(Article *) [articles objectAtIndex:indexPath.row] isUnread] isEqualToNumber: [NSNumber numberWithInt:1]])
-            {
-                cell.titleLabel.textColor = [UIColor redColor];
-            }
-            else
-            {
-                cell.titleLabel.textColor = [UIColor blackColor];
-            }
-            
-            UILabel *titleLabel = cell.titleLabel;
-            NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
-            paragraphStyle.lineBreakMode = titleLabel.lineBreakMode;
-            CGFloat height = [self calculateHeightOfText:titleText font:[UIFont boldSystemFontOfSize:19.0f] maximumWidthOfText:self.tableView.bounds.size.width - 16.0f paragraphStyle:paragraphStyle];
-            
-            [titleLabel addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:[NSString stringWithFormat:@"V:[titleLabel(==%f)]", height] options:0 metrics:nil views:NSDictionaryOfVariableBindings(titleLabel)]];
+            ArticleCell *cell = [self.tableView dequeueReusableCellWithIdentifier:articleCell forIndexPath:indexPath];
+            [self configureArticleCell:cell atIndexPath:indexPath];
             
             return cell;
         }
         case articlesOfAFeed:
         {
-            UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellString];
-            cell.textLabel.text = [(Article *) [articles objectAtIndex:indexPath.row] title];
-            cell.textLabel.numberOfLines = 0;
-            cell.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
-            
-            if ([[(Article *) [articles objectAtIndex:indexPath.row] isUnread] isEqualToNumber: [NSNumber numberWithInt:1]])
-            {
-                cell.textLabel.textColor = [UIColor redColor];
-            }
-            else
-            {
-                cell.textLabel.textColor = [UIColor blackColor];
-            }
+            TitleCell *cell = [tableView dequeueReusableCellWithIdentifier:cellString forIndexPath:indexPath];
+            [self configureTitleCell:cell atIndexPath:indexPath];
             
             return cell;
         }
@@ -655,8 +683,9 @@ NSString * const okButtonTitle = @"Ok";
         [self.navigationItem setRightBarButtonItem:nil];
         UIBarButtonItem *button = [[UIBarButtonItem alloc] initWithTitle:showAll style:UIBarButtonItemStylePlain target:self action:@selector (showAllArticles)];
         self.navigationItem.rightBarButtonItem = button;
+        selectedFeedURL = [(Feed *) [fetchedResultsController objectAtIndexPath:indexPath] feedURL];
         
-        [self getArticlesOfFeedAtIndex:indexPath];
+        [self setUpFetchedResultsController];
         
         self.navigationController.navigationBar.topItem.title = [(Feed *) [feeds objectAtIndex:indexPath.row] name];
         
@@ -675,42 +704,43 @@ NSString * const okButtonTitle = @"Ok";
         case allFeeds:
         {
             paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
-            [NSString stringWithFormat:@"%li",[[(Feed *) [feeds objectAtIndex:indexPath.row] unreadArticleCount] integerValue]];
-            CGFloat widthOfNewArticleCount = [self calculateWidthtOfText:[NSString stringWithFormat:@"%li",[[(Feed *) [feeds objectAtIndex:indexPath.row] unreadArticleCount] integerValue]] font:[UIFont systemFontOfSize:17.0f] maximumHeightOfText:CGFLOAT_MAX paragraphStyle:paragraphStyle];
+            Feed *feed = [fetchedResultsController objectAtIndexPath:indexPath];
+            CGFloat widthOfNewArticleCount = [self calculateWidthtOfText:[NSString stringWithFormat:@"%li",[feed.unreadArticleCount integerValue]] font:[UIFont systemFontOfSize:17.0f] maximumHeightOfText:CGFLOAT_MAX paragraphStyle:paragraphStyle];
             if (widthOfNewArticleCount > 110.f)
             {
                 widthOfNewArticleCount = 110.0f;
             }
             paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
-            height = [self calculateHeightOfText:[(Feed *) [feeds objectAtIndex:indexPath.row] name] font:[UIFont systemFontOfSize:17.0f] maximumWidthOfText:self.view.bounds.size.width - 110.0f - widthOfNewArticleCount paragraphStyle:paragraphStyle];
+            height = [self calculateHeightOfText:feed.name font:[UIFont systemFontOfSize:17.0f] maximumWidthOfText:self.view.bounds.size.width - 110.0f - widthOfNewArticleCount paragraphStyle:paragraphStyle];
             break;
         }
         case allArticles:
         {
-            NSString *descriptionText = [[(Article *) [articles objectAtIndex:indexPath.row] articleDescription] copy];
+            Article *article = [fetchedResultsController objectAtIndexPath:indexPath];
+            NSString *descriptionText = [article.articleDescription copy];
+            paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
+            
+            height = [self calculateHeightOfText:article.title font:[UIFont boldSystemFontOfSize:19.0f] maximumWidthOfText:self.tableView.bounds.size.width - 16.0f paragraphStyle:paragraphStyle];
+            
             if ([descriptionText length] != 0)
             {
                 if ([descriptionText length] > 100)
                 {
                     descriptionText = [descriptionText substringToIndex:100];
                 }
-                paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
-                height = [self calculateHeightOfText:descriptionText font:[UIFont systemFontOfSize:17.0f] maximumWidthOfText:self.tableView.bounds.size.width - 16.0f paragraphStyle:paragraphStyle];
+                height += 8.0f;
+                
+                CGFloat descriptionHeight = [self calculateHeightOfText:descriptionText font:[UIFont systemFontOfSize:17.0f] maximumWidthOfText:self.tableView.bounds.size.width - 16.0f paragraphStyle:paragraphStyle];
+                height += descriptionHeight;
             }
-            else
-            {
-                height = 0.0f;
-            }
-            paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
-            height += [self calculateHeightOfText:[(Article *) [articles objectAtIndex:indexPath.row] title] font:[UIFont boldSystemFontOfSize:19.0f] maximumWidthOfText:self.tableView.bounds.size.width - 16.0f paragraphStyle:paragraphStyle];
-            height = height + 8.0f;
             
             break;
         }
         case articlesOfAFeed:
         {
+            Article *article = [fetchedResultsController objectAtIndexPath:indexPath];
             paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
-            height = [self calculateHeightOfText:[(Article *) [articles objectAtIndex:indexPath.row] title] font:[UIFont systemFontOfSize:17.0f] maximumWidthOfText:self.view.bounds.size.width - 16.0f paragraphStyle:paragraphStyle];
+            height = [self calculateHeightOfText:article.title font:[UIFont boldSystemFontOfSize:19.0f] maximumWidthOfText:self.view.bounds.size.width - 16.0f paragraphStyle:paragraphStyle];
             break;
         }
     }
@@ -750,8 +780,58 @@ NSString * const okButtonTitle = @"Ok";
         DetailViewController *detailView = [segue destinationViewController];
         NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
         detailView.indexPath = indexPath;
-        detailView.articles = articles;
+        detailView.fetchedResultsController = fetchedResultsController;
         [self saveContext];
+    }
+}
+
+#pragma mark - FetchedResultsControllerDelegate
+
+-(void)controllerWillChangeContent:(NSFetchedResultsController *)controller
+{
+    [self.tableView beginUpdates];
+}
+
+-(void)controllerDidChangeContent:(NSFetchedResultsController *)controller
+{
+    [self.tableView endUpdates];
+}
+
+-(void)controller:(NSFetchedResultsController *)controller didChangeObject:(id)anObject atIndexPath:(NSIndexPath *)indexPath forChangeType:(NSFetchedResultsChangeType)type newIndexPath:(NSIndexPath *)newIndexPath {
+    switch (type) {
+        case NSFetchedResultsChangeInsert: {
+            [self.tableView insertRowsAtIndexPaths:@[newIndexPath] withRowAnimation:UITableViewRowAnimationFade];
+            break;
+        }
+        case NSFetchedResultsChangeDelete: {
+            [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+            break;
+        }
+        case NSFetchedResultsChangeUpdate: {
+            switch (viewType) {
+                case allFeeds:
+                {
+                    [self configureFeedCell:(FeedCell *) [self.tableView cellForRowAtIndexPath:indexPath] atIndexPath:indexPath];
+                    break;
+                }
+                case allArticles:
+                {
+                    [self configureArticleCell:(ArticleCell *) [self.tableView cellForRowAtIndexPath:indexPath] atIndexPath:indexPath];
+                   break;
+                }
+                case articlesOfAFeed:
+                {
+                    [self configureTitleCell:(TitleCell *) [self.tableView cellForRowAtIndexPath:indexPath] atIndexPath:indexPath];
+                    break;
+                }
+            }
+            break;
+        }
+        case NSFetchedResultsChangeMove: {
+            [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView insertRowsAtIndexPaths:@[newIndexPath] withRowAnimation:UITableViewRowAnimationFade];
+            break;
+        }
     }
 }
 

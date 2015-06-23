@@ -2,6 +2,7 @@
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="7702" systemVersion="14D136" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="rS3-R9-Ivy">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7701"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
         <!--Master-->
@@ -109,14 +110,20 @@
                                         </label>
                                     </subviews>
                                     <constraints>
-                                        <constraint firstItem="ocr-sB-eh1" firstAttribute="top" secondItem="ddz-Lo-pZX" secondAttribute="top" constant="8" id="1ia-nX-qPQ"/>
+                                        <constraint firstItem="ocr-sB-eh1" firstAttribute="top" secondItem="ddz-Lo-pZX" secondAttribute="top" priority="750" constant="8" id="1ia-nX-qPQ"/>
                                         <constraint firstItem="ocr-sB-eh1" firstAttribute="leading" secondItem="ddz-Lo-pZX" secondAttribute="leading" constant="8" id="44I-5L-lxy"/>
                                         <constraint firstItem="HNO-xI-h0i" firstAttribute="trailing" secondItem="ddz-Lo-pZX" secondAttribute="trailing" constant="-8" id="4QK-u6-mkW"/>
                                         <constraint firstItem="HNO-xI-h0i" firstAttribute="leading" secondItem="ddz-Lo-pZX" secondAttribute="leading" constant="8" id="AuO-uF-ifO"/>
                                         <constraint firstItem="HNO-xI-h0i" firstAttribute="bottom" secondItem="ddz-Lo-pZX" secondAttribute="bottom" constant="-8" id="P7Y-A1-pUU"/>
                                         <constraint firstItem="ocr-sB-eh1" firstAttribute="bottom" secondItem="HNO-xI-h0i" secondAttribute="top" constant="-8" id="SJv-oL-haH"/>
                                         <constraint firstItem="ocr-sB-eh1" firstAttribute="trailing" secondItem="ddz-Lo-pZX" secondAttribute="trailing" constant="-8" id="pNZ-u8-5u3"/>
+                                        <constraint firstAttribute="bottomMargin" relation="greaterThanOrEqual" secondItem="ocr-sB-eh1" secondAttribute="bottom" constant="8" id="v80-Ra-FRo"/>
                                     </constraints>
+                                    <variation key="default">
+                                        <mask key="constraints">
+                                            <exclude reference="v80-Ra-FRo"/>
+                                        </mask>
+                                    </variation>
                                 </tableViewCellContentView>
                                 <connections>
                                     <outlet property="descriptionLabel" destination="HNO-xI-h0i" id="Ymg-mW-HoQ"/>
@@ -124,12 +131,27 @@
                                     <segue destination="Ah7-4n-0Wa" kind="show" identifier="showArticleFromAllArticles" id="UCW-qb-aXx"/>
                                 </connections>
                             </tableViewCell>
-                            <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="Cell" id="aFf-R1-gQf">
+                            <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="Cell" rowHeight="61" id="aFf-R1-gQf" customClass="TitleCell">
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="aFf-R1-gQf" id="fRJ-GO-K1M">
                                     <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Title" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SuN-C1-0P4">
+                                            <rect key="frame" x="8" y="8" width="584" height="44"/>
+                                            <fontDescription key="fontDescription" type="boldSystem" pointSize="19"/>
+                                            <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
+                                    </subviews>
+                                    <constraints>
+                                        <constraint firstAttribute="bottom" secondItem="SuN-C1-0P4" secondAttribute="bottom" constant="8" id="77b-D9-S4w"/>
+                                        <constraint firstItem="SuN-C1-0P4" firstAttribute="leading" secondItem="fRJ-GO-K1M" secondAttribute="leading" constant="8" id="Nk8-kr-szg"/>
+                                        <constraint firstItem="SuN-C1-0P4" firstAttribute="top" secondItem="fRJ-GO-K1M" secondAttribute="top" constant="8" id="SU0-47-eOH"/>
+                                        <constraint firstAttribute="trailing" secondItem="SuN-C1-0P4" secondAttribute="trailing" constant="8" id="vDE-ub-aCv"/>
+                                    </constraints>
                                 </tableViewCellContentView>
                                 <connections>
+                                    <outlet property="titleLabel" destination="SuN-C1-0P4" id="6e9-Jd-yrx"/>
                                     <segue destination="Ah7-4n-0Wa" kind="show" identifier="showArticleFromArticlesOfAFeed" id="P5P-Ho-1Cy"/>
                                 </connections>
                             </tableViewCell>
