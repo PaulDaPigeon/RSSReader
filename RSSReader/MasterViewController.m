@@ -10,6 +10,8 @@
 #import "DetailViewController.h"
 #import "MagicalRecord.h"
 #import "Feed.h"
+#import "Feed+Counter.h"
+#import "FeedParser.h"
 #import "Article.h"
 #import "FeedCell.h"
 #import "ArticleCell.h"
@@ -22,25 +24,10 @@ typedef enum ViewTypes
     articlesOfAFeed
 }ViewType;
 
-@interface MasterViewController () <UIAlertViewDelegate, NSXMLParserDelegate, NSFetchedResultsControllerDelegate>
+@interface MasterViewController () <UIAlertViewDelegate, NSFetchedResultsControllerDelegate>
 {
     ViewType viewType;
-    NSMutableArray *feeds;
-    NSMutableArray *articles;
-    NSString *currentElement;
-    NSMutableString *currentTitle;
-    NSMutableString *currentImage;
-    NSMutableString *currentPublicationDate;
-    NSMutableString *currentLink;
-    NSMutableString *currentArticleDescription;
-    NSString *feedName;
-    Article *currentArticle;
-    Feed *currentFeed;
-    Boolean shouldAutodetectName;
-    Boolean inImageElement;
-    Boolean inItemElement;
-    NSInteger indexOfCellBeingEdited;
-    NSArray *oldArticles;
+    NSIndexPath *indexOfCellBeingEdited;
     
     NSFetchedResultsController *fetchedResultsController;
     NSString *selectedFeedURL;
@@ -62,18 +49,10 @@ NSString * const editButtonTitle = @"Save changes";
 NSString * const cancelButtonTitle = @"Cancel";
 NSString * const nameTextFieldPlaceholder = @"Enter the name of the feed";
 NSString * const addressTextFieldPlaceholder = @"Enter the address of the feed";
+NSString * const publicationDate = @"publicationDate";
 NSString * const name = @"name";
 NSString * const alertMessage = @"Leave name blank to autodetect.";
 NSString * const showAll = @"Show All";
-NSString * const itemElement = @"item";
-NSString * const linkElement = @"link";
-NSString * const titleElement = @"title";
-NSString * const descriptionElement = @"description";
-NSString * const publicationDateElement = @"pubDate";
-NSString * const imageElement = @"image";
-NSString * const urlElement = @"url";
-NSString * const rfc822DateFormat = @"EEE, dd MMM yyyy HH:mm:ss z";
-NSString * const publicationDate = @"publicationDate";
 NSString * const showArticleFromArticlesOfAFeedSegue = @"showArticleFromArticlesOfAFeed";
 NSString * const showArticleFromAllArticlesSegue = @"showArticleFromAllArticles";
 NSString * const invalidURL = @"Invalid address";
@@ -81,21 +60,6 @@ NSString * const okButtonTitle = @"Ok";
 
 
 @implementation MasterViewController
-
--(void)setUpExampleFeeds
-{
-    feeds = [NSMutableArray array];
-    Feed *feed = [Feed MR_createEntity];
-    feed.name = @"Apple news";
-    feed.feedURL = @"http://images.apple.com/main/rss/hotnews/hotnews.rss";
-    [feeds addObject:feed];
-    
-    feed = [Feed MR_createEntity];
-    feed.name = @"Example feed";
-    feed.feedURL = @"http://www.feedforall.com/sample.xml";
-    feed.image = @"http://www.feedforall.com/ffalogo48x48.gif";
-    [feeds addObject:feed];
-}
 
 -(void)viewDidLoad
 {
@@ -105,23 +69,13 @@ NSString * const okButtonTitle = @"Ok";
     UIBarButtonItem *button = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector (addFeed:)];
     self.navigationItem.rightBarButtonItem = button;
     
-    [self fetchFeeds];
-    shouldAutodetectName = NO;
-    
-    for (Feed *feed in feeds)
-    {
-        currentFeed = feed;
-        feed.unreadArticleCount = 0;
-        [self parseForArticles:feed];
-        [self countUnreadArticles:feed];
-    }
-    [self saveContext];
-    
     UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
     [refreshControl addTarget:self action:@selector(refresh:) forControlEvents:UIControlEventValueChanged];
     [self setRefreshControl:refreshControl];
     
     [self setUpFetchedResultsController];
+    
+    [self refresh:self];
 }
 
 -(void)setUpFetchedResultsController
@@ -164,27 +118,14 @@ NSString * const okButtonTitle = @"Ok";
     }
 }
 
-
--(void)countUnreadArticles:(Feed *)feed
-{
-    feed.unreadArticleCount = [NSNumber numberWithInt:0];
-    
-    NSArray *articleArray =[feed.articles allObjects];
-    for (Article *article in articleArray)
-    {
-        if ([article.isUnread isEqualToNumber: [NSNumber numberWithInt:1]])
-        {
-            feed.unreadArticleCount = [NSNumber numberWithLong:[feed.unreadArticleCount integerValue] + 1l];
-        }
-    }
-}
-
 -(void)refresh:(id)sender
 {
+    NSArray *feeds = [fetchedResultsController fetchedObjects];
+    FeedParser *parser = [[FeedParser alloc] init];
+    
     for (Feed *feed in feeds)
     {
-        currentFeed = feed;
-        [self parseForArticles:feed];
+        [parser parseFeed:feed andShouldAutoDetectName:NO];
     }
     [self saveContext];
     
@@ -208,10 +149,14 @@ NSString * const okButtonTitle = @"Ok";
             
             [self setUpFetchedResultsController];
             
+            NSArray *feeds = [fetchedResultsController fetchedObjects];
+            
             for (Feed *feed in feeds)
             {
-                [self countUnreadArticles:feed];
+                [feed countUnreadArticles];
             }
+            
+            [self saveContext];
             
             [self.tableView reloadData];
         }
@@ -226,7 +171,7 @@ NSString * const okButtonTitle = @"Ok";
 -(IBAction)editCell:(id)sender
 {
     UIButton *button = (UIButton *) sender;
-    indexOfCellBeingEdited = button.tag;
+    indexOfCellBeingEdited = [NSIndexPath indexPathForRow:button.tag inSection:0];
     
     UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:editAlertTitle message:alertMessage delegate:self cancelButtonTitle:cancelButtonTitle otherButtonTitles:editButtonTitle, nil];
     alertView.tag = 1;
@@ -239,8 +184,8 @@ NSString * const okButtonTitle = @"Ok";
     nameTextField.placeholder = nameTextFieldPlaceholder;
     addressTextField.placeholder = addressTextFieldPlaceholder;
     
-    nameTextField.text = [[feeds objectAtIndex:indexOfCellBeingEdited] name];
-    addressTextField.text = [[feeds objectAtIndex:indexOfCellBeingEdited] feedURL];
+    nameTextField.text = [[fetchedResultsController objectAtIndexPath:indexOfCellBeingEdited] name];
+    addressTextField.text = [[fetchedResultsController objectAtIndexPath:indexOfCellBeingEdited] feedURL];
     
     [alertView show];
 }
@@ -274,143 +219,6 @@ NSString * const okButtonTitle = @"Ok";
     [self.tableView reloadData];
 }
 
--(void)parseForArticles:(Feed *)feed
-{
-    oldArticles = [feed.articles allObjects];
-    
-    NSXMLParser *parser = [[NSXMLParser alloc] initWithContentsOfURL:[NSURL URLWithString:feed.feedURL]];
-    [parser setDelegate:self];
-    [parser setShouldResolveExternalEntities:NO];
-    [parser parse];
-    if (shouldAutodetectName)
-    {
-        feed.name = feedName;
-    }
-}
-
--(NSString *)removeTrailingWhitespaceFromString:(NSString *)string
-{
-    NSError *error;
-    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"\\s+$" options:NSRegularExpressionCaseInsensitive error:&error];
-    
-    if (!error)
-    {
-        string = [regex stringByReplacingMatchesInString:string options:0 range:NSMakeRange(0, [string length]) withTemplate:@""];
-    }
-    
-    return string;
-}
-
-#pragma mark - ParserDelegate
-
-- (void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName attributes:(NSDictionary *)attributeDict {
-    
-    currentElement = elementName;
-    
-    if ([currentElement isEqualToString:itemElement]) {
-        
-        currentArticle = [Article MR_createEntity];
-        currentArticleDescription = [[NSMutableString alloc] init];
-        currentLink = [[NSMutableString alloc] init];
-        currentPublicationDate = [[NSMutableString alloc] init];
-        currentTitle = [[NSMutableString alloc] init];
-        inItemElement = YES;
-    }
-    
-    else if (!inItemElement && shouldAutodetectName)
-    {
-        currentTitle = [[NSMutableString alloc] init];
-    }
-    
-    if ([currentElement isEqualToString:imageElement])
-    {
-        currentImage = [[NSMutableString alloc] init];
-        inImageElement = YES;
-    }
-    
-}
-
-- (void)parser:(NSXMLParser *)parser foundCharacters:(NSString *)string {
-    
-    if ([currentElement isEqualToString:titleElement] && !inImageElement) {
-        [currentTitle appendString:string];
-    }
-    else if ([currentElement isEqualToString:linkElement]) {
-        [currentLink appendString:string];
-    }
-    else if ([currentElement isEqualToString:publicationDateElement])
-    {
-        [currentPublicationDate appendString:string];
-    }
-    else if ([currentElement isEqualToString:descriptionElement])
-    {
-        [currentArticleDescription appendString:string];
-    }
-    else if (inImageElement)
-        if ([currentElement isEqualToString:urlElement])
-        {
-            [currentImage appendString:string];
-        }
-}
-
-- (void)parser:(NSXMLParser *)parser didEndElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qualifiedName {
-    
-    if ([elementName isEqualToString:itemElement]) {
-        currentTitle = [[self removeTrailingWhitespaceFromString:currentTitle] mutableCopy];
-        currentArticleDescription = [[self removeTrailingWhitespaceFromString:currentArticleDescription] mutableCopy];
-        currentLink = [[self removeTrailingWhitespaceFromString:currentLink] mutableCopy];
-        currentPublicationDate = [[self removeTrailingWhitespaceFromString:currentPublicationDate] mutableCopy];
-        
-        currentTitle = [[currentTitle stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]] mutableCopy];
-        currentArticleDescription = [[currentArticleDescription stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]] mutableCopy];
-        currentLink = [[currentLink stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]] mutableCopy];
-        currentPublicationDate = [[currentPublicationDate stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]] mutableCopy];
-        
-        currentArticle.title = currentTitle;
-        currentArticle.articleDescription = currentArticleDescription;
-        currentArticle.link = currentLink;
-        
-        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-        [formatter setDateFormat:rfc822DateFormat];
-        currentPublicationDate = [[currentPublicationDate stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]] mutableCopy];
-        currentArticle.publicationDate = [formatter dateFromString:currentPublicationDate];
-        
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF.link contains %@",currentArticle.link];
-        NSArray *resultArray = [oldArticles filteredArrayUsingPredicate:predicate];
-        
-        if (resultArray.count != 0)
-        {
-            [currentArticle MR_deleteEntity];
-        }
-        else{
-            currentArticle.isUnread = [NSNumber numberWithInt:1];
-            [currentFeed addArticlesObject:currentArticle];
-        }
-        inItemElement = NO;
-    }
-    
-    if (!inItemElement && !inImageElement && shouldAutodetectName && [elementName isEqualToString:titleElement])
-    {
-        currentTitle = [[self removeTrailingWhitespaceFromString:currentTitle] mutableCopy];
-        currentTitle = [[currentTitle stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]] mutableCopy];
-        feedName = [currentTitle copy];
-    }
-    
-    if ([elementName isEqualToString:imageElement])
-    {
-        currentImage = [[self removeTrailingWhitespaceFromString:currentImage] mutableCopy];
-        currentImage = [[currentImage stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]] mutableCopy];
-        currentFeed.image = currentImage;
-        inImageElement = NO;
-    }
-}
-
-- (void)parserDidEndDocument:(NSXMLParser *)parser {
-    
-    [self.tableView reloadData];
-    
-}
-
 #pragma mark - CoreData
 
 -(void)saveContext
@@ -420,11 +228,6 @@ NSString * const okButtonTitle = @"Ok";
             NSLog(@"Error saving context: %@", error.description);
         }
     }];
-}
-
--(void)fetchFeeds
-{
-    feeds = [[Feed MR_findAllSortedBy:name ascending: YES] mutableCopy];
 }
 
 #pragma mark - AlertView
@@ -441,10 +244,11 @@ NSString * const okButtonTitle = @"Ok";
                 NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:textField.text]];
                 if ([NSURLConnection canHandleRequest:request])
                 {
-                    currentFeed = [Feed MR_createEntity];
+                    Feed *currentFeed = [Feed MR_createEntity];
                     currentFeed.feedURL = textField.text;
                     textField = [alertView textFieldAtIndex:0];
-                    if (textField.text.length == 0)
+                    Boolean shouldAutodetectName;
+                    if (textField.text.length == 0 || !textField.text.length)
                     {
                         shouldAutodetectName = YES;
                     }
@@ -454,11 +258,12 @@ NSString * const okButtonTitle = @"Ok";
                         shouldAutodetectName = NO;
                     }
                     
-                    [self parseForArticles:currentFeed];
-                    [self countUnreadArticles:currentFeed];
-                    [feeds addObject:currentFeed];
-                    [self.tableView reloadData];
+                    FeedParser *parser = [[FeedParser alloc] init];
+                    [parser parseFeed:currentFeed andShouldAutoDetectName:shouldAutodetectName];
                     [self saveContext];
+                    
+                    [self setUpFetchedResultsController];
+                    [self.tableView reloadData];
                 }
                 else
                 {
@@ -477,7 +282,7 @@ NSString * const okButtonTitle = @"Ok";
                 NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:textField.text]];
                 if ([NSURLConnection canHandleRequest:request])
                 {
-                    currentFeed = [feeds objectAtIndex:indexOfCellBeingEdited];
+                    Feed *currentFeed = [fetchedResultsController objectAtIndexPath:indexOfCellBeingEdited];
                     if (![currentFeed.feedURL isEqualToString:textField.text])
                     {
                         [currentFeed MR_deleteEntity];
@@ -485,7 +290,9 @@ NSString * const okButtonTitle = @"Ok";
                         currentFeed.feedURL = textField.text;
                     }
                     textField = [alertView textFieldAtIndex:0];
-                    if (textField.text.length == 0)
+                    Boolean shouldAutodetectName;
+                    
+                    if (textField.text.length == 0 || !textField.text.length)
                     {
                         shouldAutodetectName = YES;
                     }
@@ -495,8 +302,8 @@ NSString * const okButtonTitle = @"Ok";
                         shouldAutodetectName = NO;
                     }
                     
-                    [self parseForArticles:currentFeed];
-                    [self countUnreadArticles:currentFeed];
+                    FeedParser *parser = [[FeedParser alloc] init];
+                    [parser parseFeed:currentFeed andShouldAutoDetectName:shouldAutodetectName];
                     
                     [self saveContext];
                 }
@@ -667,8 +474,10 @@ NSString * const okButtonTitle = @"Ok";
 {
     if (editingStyle == UITableViewCellEditingStyleDelete)
     {
-        [[NSManagedObjectContext MR_defaultContext] deleteObject:[feeds objectAtIndex:indexPath.row]];
-        [feeds removeObjectAtIndex:indexPath.row];
+        [[NSManagedObjectContext MR_defaultContext] deleteObject:[fetchedResultsController objectAtIndexPath:indexPath]];
+        
+        [self setUpFetchedResultsController];
+        
         [self saveContext];
         [self.tableView reloadData];
     }
@@ -685,12 +494,11 @@ NSString * const okButtonTitle = @"Ok";
         self.navigationItem.rightBarButtonItem = button;
         selectedFeedURL = [(Feed *) [fetchedResultsController objectAtIndexPath:indexPath] feedURL];
         
-        [self setUpFetchedResultsController];
         
-        self.navigationController.navigationBar.topItem.title = [(Feed *) [feeds objectAtIndex:indexPath.row] name];
-        
+        self.navigationController.navigationBar.topItem.title = [(Feed *) [fetchedResultsController objectAtIndexPath:indexPath] name];
         [self setRefreshControl:nil];
         
+        [self setUpFetchedResultsController];
         [self.tableView reloadData];
     }
 }

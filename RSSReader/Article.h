@@ -1,9 +1,9 @@
 //
 //  Article.h
-//  RSSReader
+//  
 //
-//  Created by Hebok Pal on 6/9/15.
-//  Copyright (c) 2015 Bitfall. All rights reserved.
+//  Created by Hebok Pal on 6/24/15.
+//
 //
 
 #import <Foundation/Foundation.h>

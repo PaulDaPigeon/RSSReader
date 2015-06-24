@@ -33,7 +33,7 @@
 
 - (void)loadPage
 {
-    NSURL *url = [NSURL URLWithString:[[(Article *) [self.fetchedResultsController objectAtIndexPath:self.indexPath] link] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
+    NSURL *url = [NSURL URLWithString:[(Article *) [self.fetchedResultsController objectAtIndexPath:self.indexPath] link]];
     NSError *error;
     NSString *html = [NSString stringWithContentsOfURL:url encoding:NSUTF8StringEncoding error:&error];
     if (!error)
@@ -67,7 +67,7 @@
 
 -(IBAction)openInBrowser:(id)sender
 {
-    NSURL *url = [NSURL URLWithString:[[(Article *) [self.fetchedResultsController objectAtIndexPath:self.indexPath] link] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
+    NSURL *url = [NSURL URLWithString:[(Article *) [self.fetchedResultsController objectAtIndexPath:self.indexPath] link]];
     [[UIApplication sharedApplication] openURL:url];
 }
 
