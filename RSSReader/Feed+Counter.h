@@ -9,7 +9,10 @@
 #import "Feed.h"
 
 @interface Feed(Counter)
-
+/**
+ Counts how many articles are unread.
+ Counts in the articles set of the feed, based on the isUnread property of the Article.
+ */
 - (void)countUnreadArticles;
 
 @end

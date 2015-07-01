@@ -3,13 +3,14 @@
 
 target 'RSSReader' do
 
-pod "MagicalRecord"
+pod 'MagicalRecord'
 
 end
 
 target 'RSSReaderTests' do
 
-pod "MagicalRecord"
+pod 'MagicalRecord'
+pod 'Kiwi'
+pod 'KIF'
 
 end
-

@@ -191,6 +191,9 @@ NSString * const okButtonTitle = @"Ok";
     nameTextField.text = [[fetchedResultsController objectAtIndexPath:indexOfCellBeingEdited] name];
     addressTextField.text = [[fetchedResultsController objectAtIndexPath:indexOfCellBeingEdited] feedURL];
     
+    nameTextField.accessibilityLabel = @"Name textfield";
+    addressTextField.accessibilityLabel = @"URL textfield";
+
     [alertView show];
 }
 
@@ -205,7 +208,9 @@ NSString * const okButtonTitle = @"Ok";
     addressTextField.secureTextEntry = NO;
     
     nameTextField.placeholder = nameTextFieldPlaceholder;
+    nameTextField.accessibilityLabel = @"Name textfield";
     addressTextField.placeholder = addressTextFieldPlaceholder;
+    addressTextField.accessibilityLabel = @"URL textfield";
     
     [alertView show];
 }

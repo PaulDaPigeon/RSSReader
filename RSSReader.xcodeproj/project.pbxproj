@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		048187C06B8B1C6123DBB2F7 /* libPods-RSSReader.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C97BE729CD8F2312B81C30A5 /* libPods-RSSReader.a */; };
 		604CD966C70C2D3EC644D48F /* libPods-RSSReaderTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A224C0964775C33806645F9A /* libPods-RSSReaderTests.a */; };
+		621F13891B42E554001A97A8 /* UITest.m in Sources */ = {isa = PBXBuildFile; fileRef = 621F13881B42E554001A97A8 /* UITest.m */; };
 		622722881B1DEA620050CFAD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 622722871B1DEA620050CFAD /* main.m */; };
 		6227228B1B1DEA620050CFAD /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 6227228A1B1DEA620050CFAD /* AppDelegate.m */; };
 		6227228E1B1DEA620050CFAD /* RSSReader.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 6227228C1B1DEA620050CFAD /* RSSReader.xcdatamodeld */; };
@@ -17,9 +18,11 @@
 		622722971B1DEA620050CFAD /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 622722951B1DEA620050CFAD /* Main.storyboard */; };
 		622722991B1DEA620050CFAD /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 622722981B1DEA620050CFAD /* Images.xcassets */; };
 		6227229C1B1DEA620050CFAD /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6227229A1B1DEA620050CFAD /* LaunchScreen.xib */; };
-		622722A81B1DEA620050CFAD /* RSSReaderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 622722A71B1DEA620050CFAD /* RSSReaderTests.m */; };
 		62302F221B30853600FF1C60 /* browser.png in Resources */ = {isa = PBXBuildFile; fileRef = 62302F211B30853600FF1C60 /* browser.png */; };
 		625199AF1B25D79D00D748CD /* FeedCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 625199AE1B25D79D00D748CD /* FeedCell.m */; };
+		625E1D221B415AB3004AB1BE /* FeedParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 625E1D211B415AB3004AB1BE /* FeedParserTest.m */; };
+		625E1D241B415D28004AB1BE /* FeedTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 625E1D231B415D28004AB1BE /* FeedTest.m */; };
+		625E1D261B41658F004AB1BE /* Feed+CounterTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 625E1D251B41658F004AB1BE /* Feed+CounterTest.m */; };
 		629A185E1B39945A001547D7 /* TitleCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 629A185D1B39945A001547D7 /* TitleCell.m */; };
 		62D4E8C11B3AF88100BCE8B1 /* Feed.m in Sources */ = {isa = PBXBuildFile; fileRef = 62D4E8BE1B3AF88100BCE8B1 /* Feed.m */; };
 		62D4E8C21B3AF88100BCE8B1 /* Article.m in Sources */ = {isa = PBXBuildFile; fileRef = 62D4E8C01B3AF88100BCE8B1 /* Article.m */; };
@@ -40,6 +43,7 @@
 
 /* Begin PBXFileReference section */
 		00000420862645F9F405600A /* Pods-RSSReaderTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RSSReaderTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-RSSReaderTests/Pods-RSSReaderTests.release.xcconfig"; sourceTree = "<group>"; };
+		621F13881B42E554001A97A8 /* UITest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UITest.m; sourceTree = "<group>"; };
 		622722821B1DEA620050CFAD /* RSSReader.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RSSReader.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		622722861B1DEA620050CFAD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		622722871B1DEA620050CFAD /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -55,10 +59,12 @@
 		6227229B1B1DEA620050CFAD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
 		622722A11B1DEA620050CFAD /* RSSReaderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RSSReaderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		622722A61B1DEA620050CFAD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		622722A71B1DEA620050CFAD /* RSSReaderTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RSSReaderTests.m; sourceTree = "<group>"; };
 		62302F211B30853600FF1C60 /* browser.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = browser.png; sourceTree = "<group>"; };
 		625199AD1B25D79D00D748CD /* FeedCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FeedCell.h; sourceTree = "<group>"; };
 		625199AE1B25D79D00D748CD /* FeedCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FeedCell.m; sourceTree = "<group>"; };
+		625E1D211B415AB3004AB1BE /* FeedParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FeedParserTest.m; sourceTree = "<group>"; };
+		625E1D231B415D28004AB1BE /* FeedTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FeedTest.m; sourceTree = "<group>"; };
+		625E1D251B41658F004AB1BE /* Feed+CounterTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Feed+CounterTest.m"; sourceTree = "<group>"; };
 		629A185C1B39945A001547D7 /* TitleCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TitleCell.h; sourceTree = "<group>"; };
 		629A185D1B39945A001547D7 /* TitleCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TitleCell.m; sourceTree = "<group>"; };
 		62D4E8BD1B3AF88100BCE8B1 /* Feed.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Feed.h; sourceTree = "<group>"; };
@@ -172,7 +178,10 @@
 		622722A41B1DEA620050CFAD /* RSSReaderTests */ = {
 			isa = PBXGroup;
 			children = (
-				622722A71B1DEA620050CFAD /* RSSReaderTests.m */,
+				625E1D231B415D28004AB1BE /* FeedTest.m */,
+				625E1D211B415AB3004AB1BE /* FeedParserTest.m */,
+				625E1D251B41658F004AB1BE /* Feed+CounterTest.m */,
+				621F13881B42E554001A97A8 /* UITest.m */,
 				622722A51B1DEA620050CFAD /* Supporting Files */,
 			);
 			path = RSSReaderTests;
@@ -384,7 +393,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				622722A81B1DEA620050CFAD /* RSSReaderTests.m in Sources */,
+				625E1D221B415AB3004AB1BE /* FeedParserTest.m in Sources */,
+				621F13891B42E554001A97A8 /* UITest.m in Sources */,
+				625E1D241B415D28004AB1BE /* FeedTest.m in Sources */,
+				625E1D261B41658F004AB1BE /* Feed+CounterTest.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
