@@ -28,6 +28,9 @@
     [self.webView addGestureRecognizer:rightRecognizer];
     [rightRecognizer setDelegate:self];
     
+    UINavigationController *navigationController  = (UINavigationController*) [self.navigationController.viewControllers objectAtIndex:1];
+    navigationController.navigationItem.title = [(Article *) [self.fetchedResultsController objectAtIndexPath:self.indexPath] title];
+    
     [self loadPage];
 }
 
