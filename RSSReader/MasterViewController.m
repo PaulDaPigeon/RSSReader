@@ -25,17 +25,15 @@ typedef enum ViewTypes
 }ViewType;
 
 @interface MasterViewController () <UIAlertViewDelegate, NSFetchedResultsControllerDelegate>
-{
-    ViewType viewType;
-    NSIndexPath *indexOfCellBeingEdited;
-    
-    NSFetchedResultsController *fetchedResultsController;
-    NSString *selectedFeedURL;
-}
 
 @property (strong, nonatomic) IBOutlet UISegmentedControl *segmentedControl;
 
 @end
+
+ViewType viewType;
+NSIndexPath *indexOfCellBeingEdited;
+NSFetchedResultsController *fetchedResultsController;
+NSString *selectedFeedURL;
 
 NSString * const feedsString = @"Feeds";
 NSString * const allArticlesString = @"All articles";
@@ -52,7 +50,7 @@ NSString * const addressTextFieldPlaceholder = @"Enter the address of the feed";
 NSString * const publicationDate = @"publicationDate";
 NSString * const name = @"name";
 NSString * const alertMessage = @"Leave name blank to autodetect.";
-NSString * const showAll = @"Show All";
+NSString * const showAll = @"Show all";
 NSString * const showArticleFromArticlesOfAFeedSegue = @"showArticleFromArticlesOfAFeed";
 NSString * const showArticleFromAllArticlesSegue = @"showArticleFromAllArticles";
 NSString * const invalidURL = @"Invalid address";
@@ -92,7 +90,7 @@ NSString * const okButtonTitle = @"Ok";
     else
     {
         fetchRequest = [[NSFetchRequest alloc] initWithEntityName:@"Article"];
-        sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:publicationDate ascending:NO];
+        sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:publicationDate ascending:YES];
         
         if (viewType == articlesOfAFeed)
         {
@@ -122,10 +120,16 @@ NSString * const okButtonTitle = @"Ok";
 {
     NSArray *feeds = [fetchedResultsController fetchedObjects];
     FeedParser *parser = [[FeedParser alloc] init];
+    NSError *error;
     
     for (Feed *feed in feeds)
     {
-        [parser parseFeed:feed andShouldAutoDetectName:NO];
+        [parser parseFeed:feed andShouldAutoDetectName:NO error:&error];
+        if (error)
+        {
+            NSLog(@"%@", error);
+            return;
+        }
     }
     [self saveContext];
     
@@ -241,36 +245,37 @@ NSString * const okButtonTitle = @"Ok";
             if (buttonIndex == 1)
             {
                 UITextField *textField = [alertView textFieldAtIndex:1];
-                NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:textField.text]];
-                if ([NSURLConnection canHandleRequest:request])
+                Feed *currentFeed = [Feed MR_createEntity];
+                currentFeed.feedURL = textField.text;
+                textField = [alertView textFieldAtIndex:0];
+                Boolean shouldAutodetectName;
+                if (textField.text.length == 0 || !textField.text.length)
                 {
-                    Feed *currentFeed = [Feed MR_createEntity];
-                    currentFeed.feedURL = textField.text;
-                    textField = [alertView textFieldAtIndex:0];
-                    Boolean shouldAutodetectName;
-                    if (textField.text.length == 0 || !textField.text.length)
-                    {
-                        shouldAutodetectName = YES;
-                    }
-                    else
-                    {
-                        currentFeed.name = textField.text;
-                        shouldAutodetectName = NO;
-                    }
-                    
-                    FeedParser *parser = [[FeedParser alloc] init];
-                    [parser parseFeed:currentFeed andShouldAutoDetectName:shouldAutodetectName];
-                    [self saveContext];
-                    
-                    [self setUpFetchedResultsController];
-                    [self.tableView reloadData];
+                    shouldAutodetectName = YES;
                 }
                 else
                 {
-                    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:invalidURL message:nil delegate:nil cancelButtonTitle:okButtonTitle otherButtonTitles: nil];
-                    
-                    [alert show];
+                    currentFeed.name = textField.text;
+                    shouldAutodetectName = NO;
                 }
+                
+                FeedParser *parser = [[FeedParser alloc] init];
+                NSError *error;
+                [parser parseFeed:currentFeed andShouldAutoDetectName:shouldAutodetectName error:&error];
+                if (error)
+                {
+                    NSLog(@"%@", error);
+                    [currentFeed MR_deleteEntity];
+                    
+                    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:invalidURL message:nil delegate:nil cancelButtonTitle:okButtonTitle otherButtonTitles: nil];
+                    
+                    [alertView show];
+                }
+                
+                [self saveContext];
+                
+                [self setUpFetchedResultsController];
+                [self.tableView reloadData];
             }
             break;
         }
@@ -279,40 +284,41 @@ NSString * const okButtonTitle = @"Ok";
             if (buttonIndex == 1)
             {
                 UITextField *textField = [alertView textFieldAtIndex:1];
-                NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:textField.text]];
-                if ([NSURLConnection canHandleRequest:request])
+                Feed *currentFeed = [fetchedResultsController objectAtIndexPath:indexOfCellBeingEdited];
+                if (![currentFeed.feedURL isEqualToString:textField.text])
                 {
-                    Feed *currentFeed = [fetchedResultsController objectAtIndexPath:indexOfCellBeingEdited];
-                    if (![currentFeed.feedURL isEqualToString:textField.text])
-                    {
-                        [currentFeed MR_deleteEntity];
-                        currentFeed = [Feed MR_createEntity];
-                        currentFeed.feedURL = textField.text;
-                    }
-                    textField = [alertView textFieldAtIndex:0];
-                    Boolean shouldAutodetectName;
-                    
-                    if (textField.text.length == 0 || !textField.text.length)
-                    {
-                        shouldAutodetectName = YES;
-                    }
-                    else
-                    {
-                        currentFeed.name = textField.text;
-                        shouldAutodetectName = NO;
-                    }
-                    
-                    FeedParser *parser = [[FeedParser alloc] init];
-                    [parser parseFeed:currentFeed andShouldAutoDetectName:shouldAutodetectName];
-                    
-                    [self saveContext];
+                    [currentFeed MR_deleteEntity];
+                    currentFeed = [Feed MR_createEntity];
+                    currentFeed.feedURL = textField.text;
+                }
+                textField = [alertView textFieldAtIndex:0];
+                Boolean shouldAutodetectName;
+                
+                if (textField.text.length == 0 || !textField.text.length)
+                {
+                    shouldAutodetectName = YES;
                 }
                 else
                 {
-                    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:invalidURL message:nil delegate:nil cancelButtonTitle:okButtonTitle otherButtonTitles: nil];
-                    
-                    [alert show];
+                    currentFeed.name = textField.text;
+                    shouldAutodetectName = NO;
                 }
+                
+                FeedParser *parser = [[FeedParser alloc] init];
+                NSError *error;
+                [parser parseFeed:currentFeed andShouldAutoDetectName:shouldAutodetectName error:&error];
+                if (error)
+                {
+                    NSLog(@"%@", error);
+                    [currentFeed MR_deleteEntity];
+                    
+                    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:invalidURL message:nil delegate:nil cancelButtonTitle:okButtonTitle otherButtonTitles: nil];
+                    
+                    [alertView show];
+                }
+                
+                [self saveContext];
+                
             }
             
         }
@@ -492,6 +498,8 @@ NSString * const okButtonTitle = @"Ok";
         [self.navigationItem setRightBarButtonItem:nil];
         UIBarButtonItem *button = [[UIBarButtonItem alloc] initWithTitle:showAll style:UIBarButtonItemStylePlain target:self action:@selector (showAllArticles)];
         self.navigationItem.rightBarButtonItem = button;
+        
+        
         selectedFeedURL = [(Feed *) [fetchedResultsController objectAtIndexPath:indexPath] feedURL];
         
         

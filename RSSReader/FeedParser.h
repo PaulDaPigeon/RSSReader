@@ -11,6 +11,5 @@
 
 @interface FeedParser : NSObject <NSXMLParserDelegate>
 
--(void)parseFeed:(Feed *)feed andShouldAutoDetectName:(Boolean)shouldAutoDetectName;
-
+-(void)parseFeed:(Feed *)feed andShouldAutoDetectName:(Boolean)shouldAutoDetectName error:(NSError **)error;
 @end

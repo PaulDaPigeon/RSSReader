@@ -10,23 +10,20 @@
 #import "MagicalRecord.h"
 #import "Article.h"
 
-@interface FeedParser()
-{
-    NSString *currentElement;
-    NSMutableString *currentTitle;
-    NSMutableString *currentImage;
-    NSMutableString *currentPublicationDate;
-    NSMutableString *currentLink;
-    NSMutableString *currentArticleDescription;
-    NSString *feedName;
-    Feed *currentFeed;
-    Article *currentArticle;
-    Boolean shouldAutodetectName;
-    Boolean inImageElement;
-    Boolean inItemElement;
-}
 
-@end
+NSString *currentElement;
+NSMutableString *currentTitle;
+NSMutableString *currentImage;
+NSMutableString *currentPublicationDate;
+NSMutableString *currentLink;
+NSMutableString *currentArticleDescription;
+NSString *feedName;
+Feed *currentFeed;
+Article *currentArticle;
+Boolean shouldAutodetectName;
+Boolean inImageElement;
+Boolean inItemElement;
+
 
 NSString * const ITEM_ELEMENT = @"item";
 NSString * const LINK_ELEMENT = @"link";
@@ -39,10 +36,19 @@ NSString * const RFC822_DATE_FORMAT = @"EEE, dd MMM yyyy HH:mm:ss z";
 
 @implementation FeedParser
 
--(void)parseFeed:(Feed *)feed andShouldAutoDetectName:(Boolean)shouldAutoDetectName
+-(void)parseFeed:(Feed *)feed andShouldAutoDetectName:(Boolean)shouldAutoDetectName error:(NSError **) error
 {
     shouldAutodetectName = shouldAutoDetectName;
-    NSXMLParser *parser = [[NSXMLParser alloc] initWithContentsOfURL:[NSURL URLWithString:feed.feedURL]];
+    NSURL *url = [NSURL URLWithString:feed.feedURL];
+    NSURLRequest *request = [NSURLRequest requestWithURL:url];
+    if (![NSURLConnection canHandleRequest:request])
+    {
+        NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
+        [errorDetail setValue:@"Could not load xml from url" forKey:NSLocalizedDescriptionKey];
+        *error = [NSError errorWithDomain:@"com.bitfall" code:NSURLErrorBadURL userInfo:errorDetail];
+        return;
+    }
+    NSXMLParser *parser = [[NSXMLParser alloc] initWithContentsOfURL:url];
     [parser setDelegate:self];
     [parser setShouldResolveExternalEntities:NO];
     currentFeed = feed;
@@ -56,7 +62,6 @@ NSString * const RFC822_DATE_FORMAT = @"EEE, dd MMM yyyy HH:mm:ss z";
 #pragma mark - ParserDelegate
 
 - (void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName attributes:(NSDictionary *)attributeDict {
-    
     currentElement = elementName;
     
     if ([currentElement isEqualToString:ITEM_ELEMENT]) {
@@ -106,7 +111,6 @@ NSString * const RFC822_DATE_FORMAT = @"EEE, dd MMM yyyy HH:mm:ss z";
 }
 
 - (void)parser:(NSXMLParser *)parser didEndElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qualifiedName {
-    
     if ([elementName isEqualToString:ITEM_ELEMENT]) {
         currentTitle = [[self removeTrailingWhitespaceFromString:currentTitle] mutableCopy];
         currentArticleDescription = [[self removeTrailingWhitespaceFromString:currentArticleDescription] mutableCopy];
